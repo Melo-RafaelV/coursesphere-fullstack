@@ -30,3 +30,47 @@ def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db), c
 @router.get("/", response_model=list[schemas.CourseResponse])
 def list_courses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.Course).all()
+
+@router.get("/{course_id}", response_model=schemas.CourseResponse)
+def get_course(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso não encontrado")
+    return course
+
+@router.put("/{course_id}", response_model=schemas.CourseResponse)
+def update_course(course_id: int, course_data: schemas.CourseCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso não encontrado")
+    
+   
+    if course.creator_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você não tem permissão para editar este curso")
+    
+  
+    course.name = course_data.name
+    course.description = course_data.description
+    course.start_date = course_data.start_date
+    course.end_date = course_data.end_date
+    
+    db.commit()
+    db.refresh(course)
+    return course
+
+@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso não encontrado")
+    
+    
+    if course.creator_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você não tem permissão para excluir este curso")
+    
+    db.delete(course)
+    db.commit()
+    return None
