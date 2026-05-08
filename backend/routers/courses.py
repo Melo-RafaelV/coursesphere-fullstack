@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from database import get_db
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from database import get_db
 import models, schemas, security
+
+from services import course_service
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
@@ -21,56 +23,21 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 @router.post("/", response_model=schemas.CourseResponse, status_code=status.HTTP_201_CREATED)
 def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    new_course = models.Course(**course.model_dump(), creator_id=current_user.id)
-    db.add(new_course)
-    db.commit()
-    db.refresh(new_course)
-    return new_course
+    return course_service.create_course(db=db, course=course, user_id=current_user.id)
 
 @router.get("/", response_model=list[schemas.CourseResponse])
 def list_courses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    return db.query(models.Course).all()
+    return course_service.get_all_courses(db=db)
 
 @router.get("/{course_id}", response_model=schemas.CourseResponse)
 def get_course(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    
-    course = db.query(models.Course).filter(models.Course.id == course_id).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Curso não encontrado")
-    return course
+    return course_service.get_course_by_id(db=db, course_id=course_id)
 
 @router.put("/{course_id}", response_model=schemas.CourseResponse)
 def update_course(course_id: int, course_data: schemas.CourseCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    
-    course = db.query(models.Course).filter(models.Course.id == course_id).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Curso não encontrado")
-    
-   
-    if course.creator_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você não tem permissão para editar este curso")
-    
-  
-    course.name = course_data.name
-    course.description = course_data.description
-    course.start_date = course_data.start_date
-    course.end_date = course_data.end_date
-    
-    db.commit()
-    db.refresh(course)
-    return course
+    return course_service.update_course(db=db, course_id=course_id, course_data=course_data, user_id=current_user.id)
 
 @router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_course(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    
-    course = db.query(models.Course).filter(models.Course.id == course_id).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Curso não encontrado")
-    
-    
-    if course.creator_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você não tem permissão para excluir este curso")
-    
-    db.delete(course)
-    db.commit()
+    course_service.delete_course(db=db, course_id=course_id, user_id=current_user.id)
     return None
