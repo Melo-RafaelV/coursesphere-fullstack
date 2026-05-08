@@ -1,15 +1,25 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-blue-600 mb-4">
-          CourseSphere
-        </h1>
-        <p className="text-gray-700">
-          O Tailwind CSS está configurado e funcionando perfeitamente!
-        </p>
+    <BrowserRouter>
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Rotas futuras que faremos depois:
+          <Route path="/courses/:id" element={<CourseDetails />} /> 
+          */}
+        </Routes>
       </div>
-    </div>
+    </BrowserRouter>
   );
 }
 
