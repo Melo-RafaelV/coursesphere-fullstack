@@ -9,8 +9,8 @@ def create_course(db: Session, course: schemas.CourseCreate, user_id: int):
     db.refresh(new_course)
     return new_course
 
-def get_all_courses(db: Session):
-    return db.query(models.Course).all()
+def get_courses_by_user(db: Session, user_id: int):
+    return db.query(models.Course).filter(models.Course.creator_id == user_id).all()
 
 def get_course_by_id(db: Session, course_id: int):
     course = db.query(models.Course).filter(models.Course.id == course_id).first()

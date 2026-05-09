@@ -27,7 +27,7 @@ def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db), c
 
 @router.get("/", response_model=list[schemas.CourseResponse])
 def list_courses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    return course_service.get_all_courses(db=db)
+    return course_service.get_courses_by_user(db=db, user_id=current_user.id)
 
 @router.get("/{course_id}", response_model=schemas.CourseResponse)
 def get_course(course_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
