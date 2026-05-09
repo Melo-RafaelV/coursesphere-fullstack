@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import LessonModal from '../components/LessonModal';
 
 export default function CourseDetails() {
   const { id } = useParams(); 
@@ -11,6 +12,9 @@ export default function CourseDetails() {
   const [instructor, setInstructor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all'); 
+  const [selectedLesson, setSelectedLesson] = useState(null);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -46,6 +50,13 @@ export default function CourseDetails() {
       }
     }
   };
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedLesson(null);
+  };
+  const filteredLessons = lessons.filter(lesson => 
+    filterStatus === 'all' || lesson.status === filterStatus
+  );
 
   if (loading) {
     return <div className="min-h-screen bg-[#010204] text-gray-500 flex items-center justify-center font-mono">Carregando detalhes...</div>;
@@ -107,28 +118,57 @@ export default function CourseDetails() {
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   Módulos e Aulas<span className="text-blue-500">.</span>
                 </h2>
-                <button 
-                  className="bg-blue-600 hover:bg-blue-700 text-sm px-4 py-2 rounded-lg font-medium transition shadow-md shadow-blue-900/20"
-                >
-                  + Criar Aula
-                </button>
+                <div className="flex items-center gap-3">
+                  <select 
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="bg-[#060B1A] border border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500 transition"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="published">Publicadas</option>
+                    <option value="draft">Rascunhos</option>
+                  </select>
+
+                  <button 
+                    onClick={() => { setSelectedLesson(null); setIsModalOpen(true); }}
+                    className="bg-blue-600 hover:bg-blue-700 text-sm px-4 py-2 rounded-lg font-medium transition shadow-md shadow-blue-900/20"
+                  >
+                    + Criar Aula
+                  </button>
+                </div>
               </div>
 
-              {lessons.length === 0 ? (
+              {filteredLessons.length === 0 ? (
                 <div className="text-center py-10 border border-dashed border-gray-800 rounded-xl text-gray-500">
-                  Nenhuma aula cadastrada ainda.
+                  {lessons.length === 0 ? "Nenhuma aula cadastrada ainda." : "Nenhuma aula encontrada para este filtro."}
                 </div>
               ) : (
                 <ul className="space-y-3">
-                  {lessons.map((lesson, index) => (
+                  {filteredLessons.map((lesson, index) => (
                     <li key={lesson.id} className="flex justify-between items-center bg-[#060B1A] p-4 rounded-xl border border-gray-800 hover:border-gray-600 transition">
                       <div className="flex items-center gap-3">
                         <span className="text-blue-500 font-mono text-sm">{index + 1}.</span>
-                        <span className="font-medium text-gray-200">{lesson.title}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-200">{lesson.title}</span>
+                          {lesson.video_url && (
+                            <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1">
+                              Assistir Vídeo ↗
+                            </a>
+                          )}
+                        </div>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${lesson.status === 'published' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-500'}`}>
-                        {lesson.status === 'published' ? 'Publicada' : 'Rascunho'}
-                      </span>
+                      
+                      <div className="flex items-center gap-4">
+                        <button 
+                          onClick={() => { setSelectedLesson(lesson); setIsModalOpen(true); }}
+                          className="text-gray-500 hover:text-blue-400 text-xs uppercase font-bold tracking-widest transition"
+                        >
+                          Editar
+                        </button>
+                        <span className={`text-xs px-2 py-1 rounded-full ${lesson.status === 'published' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-500'}`}>
+                          {lesson.status === 'published' ? 'Publicada' : 'Rascunho'}
+                        </span>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -163,6 +203,17 @@ export default function CourseDetails() {
 
         </div>
       </div>
+      <LessonModal 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+        courseId={id} 
+        lessonToEdit={selectedLesson}
+        onSuccess={() => {
+          handleCloseModal();
+          window.location.reload(); 
+        }} 
+      />
+
     </div>
   );
 }

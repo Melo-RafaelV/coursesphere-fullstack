@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CourseDetails from './pages/CourseDetails';
+import CreateCourse from './pages/CreateCourse';
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          
+          <Route path="/create-course" element={<CreateCourse />} />
           <Route path="/course/:id" element={<CourseDetails />} />
         </Routes>
       </div>
