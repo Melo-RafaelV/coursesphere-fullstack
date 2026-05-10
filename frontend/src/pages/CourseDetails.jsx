@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import LessonModal from '../components/LessonModal';
+import EditCourseModal from '../components/EditCourseModal';
 
 export default function CourseDetails() {
   const { id } = useParams(); 
@@ -13,6 +14,7 @@ export default function CourseDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCourseEditOpen, setIsCourseEditOpen] = useState(false); 
   const [filterStatus, setFilterStatus] = useState('all'); 
   const [selectedLesson, setSelectedLesson] = useState(null);
 
@@ -50,10 +52,22 @@ export default function CourseDetails() {
       }
     }
   };
+  const handleDeleteLesson = async (lessonId) => {
+    if (window.confirm("Tem certeza que deseja excluir esta aula?")) {
+      try {
+        await api.delete(`/lessons/${lessonId}`);
+        window.location.reload(); 
+      } catch (err) {
+        alert("Erro ao excluir. Apenas o criador pode realizar esta ação.");
+      }
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedLesson(null);
   };
+
   const filteredLessons = lessons.filter(lesson => 
     filterStatus === 'all' || lesson.status === filterStatus
   );
@@ -65,6 +79,11 @@ export default function CourseDetails() {
   if (error || !course) {
     return <div className="min-h-screen bg-[#010204] text-red-500 flex items-center justify-center">{error || "Curso não encontrado."}</div>;
   }
+  const formatSafeDate = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = String(dateString).substring(0, 10).split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#010204] text-gray-100 p-8">
@@ -85,7 +104,10 @@ export default function CourseDetails() {
                 <h1 className="text-3xl font-bold text-white">{course.name}</h1>
                 
                 <div className="flex gap-3">
-                  <button className="text-sm px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 transition">
+                  <button 
+                    onClick={() => setIsCourseEditOpen(true)}
+                    className="text-sm px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 transition"
+                  >
                     Editar
                   </button>
                   <button 
@@ -104,11 +126,11 @@ export default function CourseDetails() {
               <div className="flex gap-6 text-sm font-mono text-blue-400 bg-[#060B1A] p-4 rounded-xl border border-blue-900/30">
                 <div>
                   <span className="text-gray-500 block text-xs">Data de Início</span>
-                  {new Date(course.start_date).toLocaleDateString()}
+                  {formatSafeDate(course.start_date)}
                 </div>
                 <div>
                   <span className="text-gray-500 block text-xs">Data de Fim</span>
-                  {new Date(course.end_date).toLocaleDateString()}
+                  {formatSafeDate(course.end_date)}
                 </div>
               </div>
             </div>
@@ -117,7 +139,7 @@ export default function CourseDetails() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   Módulos e Aulas<span className="text-blue-500">.</span>
-                </h2>
+                </h2>                
                 <div className="flex items-center gap-3">
                   <select 
                     value={filterStatus}
@@ -165,6 +187,13 @@ export default function CourseDetails() {
                         >
                           Editar
                         </button>
+                        <button 
+                          onClick={() => handleDeleteLesson(lesson.id)}
+                          className="text-red-900 hover:text-red-500 text-xs uppercase font-bold tracking-widest transition"
+                        >
+                          Excluir
+                        </button>
+
                         <span className={`text-xs px-2 py-1 rounded-full ${lesson.status === 'published' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-500'}`}>
                           {lesson.status === 'published' ? 'Publicada' : 'Rascunho'}
                         </span>
@@ -212,6 +241,16 @@ export default function CourseDetails() {
           handleCloseModal();
           window.location.reload(); 
         }} 
+      />
+
+      <EditCourseModal
+        isOpen={isCourseEditOpen}
+        onClose={() => setIsCourseEditOpen(false)}
+        course={course}
+        onSuccess={() => {
+          setIsCourseEditOpen(false);
+          window.location.reload();
+        }}
       />
 
     </div>
