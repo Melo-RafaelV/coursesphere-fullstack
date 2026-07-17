@@ -25,7 +25,16 @@ O CourseSphere é uma plataforma completa para a gestão de cursos online. O sis
 
 Para rodar a aplicação completa, você precisará utilizar três terminais distintos para gerenciar a infraestrutura, o serviço de backend e a interface de frontend.
 
-### 1. Infraestrutura (Docker)
+
+### 1. Configurar o .env
+Na pasta server crie um arquivo e nomeie ele como .env:
+```bash
+#Copie e cole no seu .env
+DATABASE_URL=
+SECRET_KEY=
+```
+
+### 2. Infraestrutura (Docker)
 No primeiro terminal, na raiz do projeto, inicie o container responsável pelo banco de dados:
 ```bash
 # Sobe o banco de dados e dependências de infra
